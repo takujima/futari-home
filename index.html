@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="referrer" content="no-referrer">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ふたりのホーム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +36,8 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+/* アプリらしく：ダブルタップで拡大しない・横にしても文字が勝手に大きくならない */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   background:var(--bg); color:var(--text);
   font-family:"Zen Maru Gothic","M PLUS Rounded 1c",sans-serif; font-weight:500;
@@ -202,7 +204,7 @@ input[type=checkbox]{width:auto}
 .panel .stack{display:grid;gap:12px}
 .urlbox{display:grid;gap:6px;margin-top:6px}
 .urlbox label{font-weight:700;font-size:14px}
-.urlbox .row input{font-size:13px;font-family:"IBM Plex Mono",monospace}
+.urlbox .row input{font-size:16px;font-family:"IBM Plex Mono",monospace}
 .urlbox .row .btn{flex:none;white-space:nowrap}
 .panel a.btn{text-decoration:none}
 </style>
@@ -234,6 +236,7 @@ input[type=checkbox]{width:auto}
     <p>合言葉入りのURLです。これを開けば、合言葉を入れずに1回で入れます。<b>2人以外には送らないでください。</b></p>
     <div class="stack" id="urlList"></div>
     <p style="margin-top:14px">自分の分は、このURLで開き直してからブックマーク（iPhoneは「ホーム画面に追加」）。相手の分は、LINEなどで送ります。</p>
+    <p class="muted" id="verLine"></p>
     <button class="btn ghost" type="button" id="urlClose">閉じる</button>
   </div>
 </div>
@@ -395,7 +398,8 @@ input[type=checkbox]{width:auto}
   /* ---------- データ係（Code.gs）の住所 ----------
      Apps Script の「デプロイを管理」に出ている ウェブアプリの URL。
      デプロイを「新バージョン」で更新しているかぎり変わらない */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbyLvq9crZc7WOE-CNM_CXekWQAnvQe7OoHsfZT_YbrGJOdCxaS9KYJJ0zEtZAZzGaM1iQ/exec';
+  var APP_VER = '画面 第4.1版（拡大しない）';
+  var API_URL ='https://script.google.com/macros/s/AKfycbyLvq9crZc7WOE-CNM_CXekWQAnvQe7OoHsfZT_YbrGJOdCxaS9KYJJ0zEtZAZzGaM1iQ/exec';
 
   /* ---------- 合言葉と「自分はだれか」 ----------
      専用URLは …/futari-home/#key=合言葉&me=名前 の形。
@@ -764,6 +768,7 @@ input[type=checkbox]{width:auto}
     call('getInitialData', { ym: ymOf(today), start: g0.start, end: g0.end }).then(function(d){
       S.names = d.names; S.urls = d.names.map(function(n){ return { name: n, url: personalUrl(n) }; }); S.todos = d.todos; S.expenses = d.expenses; S.thisMonthExpenses = d.expenses;
       S.events = d.events; S.homeEvents = d.events; S.calOk = d.calendarStatus === 'ok';
+      $('verLine').textContent = APP_VER + ' ／ ' + (d.server || 'データ係 第3版');
       fillSelects(); showBanner(d);
       renderHome(); renderTodos(); renderMoney(); renderCal();
       $('loading').hidden = true;
