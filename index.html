@@ -136,8 +136,23 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
 
 /* 下から出るシート */
 .sheet-bg{position:fixed;inset:0;background:rgba(15,18,22,.4);display:flex;align-items:flex-end;justify-content:center;z-index:20}
-.sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));width:100%;max-width:520px;max-height:90%;overflow-y:auto}
-.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+.sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:0 20px calc(22px + env(safe-area-inset-bottom,0px));width:100%;max-width:520px;max-height:90%;overflow-y:auto;overflow-x:hidden;transition:transform .2s ease}
+.sheet.dragging{transition:none}
+/* 上の横バー：下に引っぱると閉じる。押しても閉じる */
+.grab-zone{position:sticky;top:0;z-index:1;background:var(--bg);padding:10px 0 14px;margin:0 -20px;cursor:grab;touch-action:none}
+.grab{width:44px;height:5px;border-radius:5px;background:var(--sub);opacity:.45;margin:0 auto}
+.sheet *{max-width:100%}
+.fld input,.cover input{-webkit-appearance:none;appearance:none;display:block;max-width:100%}
+.fld input[type=date],.fld input[type=time],.fld input[type=month]{min-height:46px;line-height:1.2}
+.gear{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:inherit;display:grid;place-items:center;cursor:pointer}
+.goal{padding:16px 0 10px;border-bottom:1px solid var(--line)}
+.goal .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.goal .head b{font-size:17px}
+.prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:10px 0 6px}
+.prog span{display:block;height:100%;background:var(--tk)}
+.ms{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0 8px 14px;border-left:2px solid var(--line);margin-left:11px}
+.ms.done .t{text-decoration:line-through;color:var(--sub)}
+.link{color:var(--tk);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .sheet h3{margin:0 0 14px;font-size:18px;font-weight:900}
 .fld{display:block;margin:0 0 14px}
 .fld>span{display:block;font-size:12px;color:var(--sub);margin:0 0 4px}
@@ -201,6 +216,7 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
     <section id="v-todo" hidden></section>
     <section id="v-money" hidden></section>
     <section id="v-cal" hidden></section>
+    <section id="v-plan" hidden></section>
     <section id="v-set" hidden></section>
   </main>
   <nav class="nav" id="nav" aria-label="画面の切り替え">
@@ -208,7 +224,7 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
     <button data-v="todo" class="addable" type="button"><svg class="i" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span class="plus"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="sr">ToDo（開いているときにもう一度押すと追加）</span></button>
     <button data-v="money" class="addable" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg><span class="plus"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="sr">家計簿（開いているときにもう一度押すと入力）</span></button>
     <button data-v="cal" type="button"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span class="sr">カレンダー</span></button>
-    <button data-v="set" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="sr">設定</span></button>
+    <button data-v="plan" class="addable" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M4 22V4a1 1 0 0 1 1-1h10l-1.5 4L15 11H5"/><path d="M15 15l3-5 4 7"/></svg><span class="plus"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="sr">計画（開いているときにもう一度押すと目標を足す）</span></button>
   </nav>
 </div>
 
@@ -233,7 +249,7 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
   /* ---------- データ係（Code.gs）の住所 ----------
      Apps Script の「デプロイを管理」に出ている ウェブアプリの URL。
      デプロイを「新バージョン」で更新しているかぎり変わらない */
-  var APP_VER = '画面 第5版（ふたつの空）';
+  var APP_VER = '画面 第6版（計画・引っぱって閉じる）';
   var API_URL = 'https://script.google.com/macros/s/AKfycbyLvq9crZc7WOE-CNM_CXekWQAnvQe7OoHsfZT_YbrGJOdCxaS9KYJJ0zEtZAZzGaM1iQ/exec';
 
   /* ---------- 合言葉と「自分はだれか」 ----------
@@ -271,7 +287,7 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
 
   /* ---------- 状態 ---------- */
   var S = {
-    v:'home', names:['',''], cardPayer:'', gomi:{}, server:'', todos:[], expenses:[], monthExpenses:[], events:[], homeEvents:[],
+    v:'home', names:['',''], cardPayer:'', gomi:[], gomiLink:'', plans:[], server:'', todos:[], expenses:[], monthExpenses:[], events:[], homeEvents:[],
     todoTab:'open', moneyTab:'list', moneyMonth:new Date(today.getFullYear(), today.getMonth(), 1),
     viewMonth:new Date(today.getFullYear(), today.getMonth(), 1), selected:today, calOk:false
   };
@@ -327,11 +343,21 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
       if (S.v === 'home') renderHome();
     }).catch(function(){});
   }
-  // 設定シートの「ゴミの日」：月:燃えるごみ,木:燃えるごみ,水:プラスチック
+  // 設定シートの「ゴミの日」：火:燃えるごみ,第2・4水:かん・びん （「第n」は その月の何回目のその曜日か）
   function parseGomi(s){
-    var g = {};
-    String(s || '').split(/[,、，]/).forEach(function(p){ var m = p.split(/[:：]/); var i = WD.indexOf((m[0] || '').trim().charAt(0)); if (i >= 0 && m[1]) g[i] = (g[i] ? g[i] + '・' : '') + m[1].trim(); });
-    return g;
+    var list = [];
+    String(s || '').split(/[,、，]/).forEach(function(p){
+      var m = p.split(/[:：]/); if (!m[1]) return;
+      var head = m[0].trim(), wd = WD.indexOf(head.slice(-1)), nth = null;
+      var mm = /^第([0-9０-９・,]+)/.exec(head);
+      if (mm) nth = mm[1].replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 65248); }).split(/[・,]/).map(Number);
+      if (wd >= 0) list.push({ wd: wd, nth: nth, name: m[1].trim() });
+    });
+    return list;
+  }
+  function gomiOn(d){
+    var n = Math.ceil(d.getDate() / 7);
+    return S.gomi.filter(function(g){ return g.wd === d.getDay() && (!g.nth || g.nth.indexOf(n) >= 0); }).map(function(g){ return g.name; }).join('・');
   }
 
   /* ---------- 上の帯 ---------- */
@@ -355,7 +381,8 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
     }
     if (S.v === 'money') h.innerHTML = monthNav(S.moneyMonth, 'money') + '<div class="seg"><button type="button" data-mt="list"' + (S.moneyTab==='list'?' class="on"':'') + '>明細</button><button type="button" data-mt="settle"' + (S.moneyTab==='settle'?' class="on"':'') + '>精算</button></div>';
     if (S.v === 'cal') h.innerHTML = monthNav(S.viewMonth, 'cal') + '<button class="mini" type="button" data-act="evSheet">予定を足す</button>';
-    if (S.v === 'set') h.innerHTML = '<b style="font-size:16px">設定</b>';
+    if (S.v === 'plan') h.innerHTML = '<span class="muted">半年より先の、大きな出来事</span><button class="mini" type="button" data-act="goalSheet">目標を足す</button>';
+    if (S.v === 'set') h.innerHTML = '<button class="mini" type="button" data-v="home">' + IC.l.replace('class="i sm"', 'class="i sm" style="vertical-align:-3px"') + ' ホーム</button><b style="font-size:16px">設定</b>';
   }
 
   /* ---------- 予定を日ごとに並べる（何日も続く予定は毎日に出す） ---------- */
@@ -373,12 +400,14 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
         '<span class="t">' + (x ? Math.round(x.t) + '°' : '—') + '</span>' +
         '<span class="s">' + (x ? wxName(x.code) + '<br>' + Math.round(x.hi) + '° / ' + Math.round(x.lo) + '°　雨 ' + x.r + '%' : '天気を読み込み中') + '</span></div>';
     }).join('') + '</div>';
+    h += '<button class="gear" type="button" data-act="openSet" aria-label="設定" style="color:' + sky(w[1] ? w[1].code : 3)[1] + '"><svg class="i" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button>';
     h += '<div class="seam"><div class="datepill"><b>' + (today.getMonth()+1) + '月' + today.getDate() + '日</b><span>' + WD[today.getDay()] + '曜日</span></div></div>';
     h += '<div class="home-list">';
-    var hasGomi = Object.keys(S.gomi).length;
+    var hasGomi = S.gomi.length;
     if (hasGomi){
-      var g = S.gomi[today.getDay()], g2 = S.gomi[addDays(today,1).getDay()];
-      h += '<div class="row two"><span class="k">ゴミ</span><b>' + esc(g ? 'きょうは' + g : 'きょうはなし') + '</b></div><div class="row two"><span class="k">あした</span><span>' + esc(g2 || 'なし') + '</span></div>';
+      var g = gomiOn(today), g2 = gomiOn(addDays(today,1));
+      h += '<div class="row two"><span class="k">ゴミ</span><b>' + esc(g ? 'きょうは' + g : 'きょうはなし') + '</b></div><div class="row two"><span class="k">あした</span><span>' + esc(g2 || 'なし') + '</span></div>' +
+        '<div class="row two"><span class="k">迷ったら</span><a class="link" href="' + esc(S.gomiLink) + '" target="_blank" rel="noopener">箕面市のごみの分け方</a></div>';
     }
     if (S.calOk){
       var ev = eventsOn(S.homeEvents, todayIso);
@@ -626,32 +655,109 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
     h += '<div class="sec-h" style="margin-top:22px"><span>あなたは</span></div><div class="row two"><span>' + esc(ME || '未設定') + '</span><button class="mini" type="button" data-act="askWho">変える</button></div>';
     h += '<div class="sec-h" style="margin-top:22px"><span>表示</span></div><div class="row two"><span>明るさ</span><div class="chips"><button type="button" data-th="light"' + (th==='light'?' class="on"':'') + '>明るい</button><button type="button" data-th="dark"' + (th==='dark'?' class="on"':'') + '>暗い</button><button type="button" data-th=""' + (!th?' class="on"':'') + '>端末に合わせる</button></div></div>';
     h += '<div class="sec-h" style="margin-top:22px"><span>空と暮らし</span></div><div class="row two"><span>' + esc(S.names[0]) + '</span><span class="muted">大阪府箕面市</span></div><div class="row two"><span>' + esc(S.names[1]) + '</span><span class="muted">滋賀県大津市 膳所</span></div>' +
-      '<div class="row two"><span>ゴミの日</span><span class="muted">' + (Object.keys(S.gomi).length ? '設定済み' : '設定シートの「ゴミの日」に書く') + '</span></div>';
+      '<div class="row two"><span>ゴミの日</span><span class="muted">' + (S.gomi.length ? '箕面市 稲（B-1）' : '設定シートの「ゴミの日」に書く') + '</span></div>' +
+      '<div class="row two"><span>分け方</span><a class="link" href="' + esc(S.gomiLink) + '" target="_blank" rel="noopener">箕面市のページ</a></div>';
     h += '<div class="sec-h" style="margin-top:22px"><span>家計簿の決まり（' + esc(S.names[0]) + ' : ' + esc(S.names[1]) + '）</span></div><div class="row two"><span>共有カードの引き落とし</span><span>' + esc(S.cardPayer) + '</span></div>' +
       '<div class="row two"><span>外食・食材・日用品</span><span class="num">50 : 50</span></div><div class="row two"><span>お酒（品目を読んだとき）</span><span class="num">90 : 10</span></div>';
     h += '<p class="muted" style="margin:22px 0 0">' + esc(APP_VER) + '　' + esc(S.server) + '</p></div>';
     $('v-set').innerHTML = h;
   }
 
+  /* ---------- 将来の計画（半年より先の大きな出来事と、その手前のマイルストーン） ---------- */
+  function ymNum(s){ var p = String(s).split('-'); return (+p[0]) * 12 + (+p[1] - 1); }
+  function ymLabel(s){ var p = String(s).split('-'); return p[0] + '年' + (+p[1]) + '月'; }
+  function monthsLeft(s){ return ymNum(s) - (today.getFullYear() * 12 + today.getMonth()); }
+  function renderPlan(){
+    var goals = S.plans.filter(function(p){ return p.kind === '目標'; }).sort(function(a,b){ return a.when < b.when ? -1 : 1; });
+    var h = '<div class="pad">';
+    if (!goals.length) h += '<p class="empty" style="text-align:center;margin-top:40px">結婚・車・家など、半年より先の大きな出来事を足してください。計画のボタンをもう一度押すと足せます</p>';
+    goals.forEach(function(g){
+      var left = monthsLeft(g.when), rest = Math.max(0, g.target - g.saved), per = left > 0 ? Math.ceil(rest / left) : rest;
+      var ms = S.plans.filter(function(p){ return p.parent === g.id; }).sort(function(a,b){ return a.when < b.when ? -1 : 1; });
+      h += '<div class="goal' + (g.done ? ' done' : '') + '"><div class="head"><b>' + esc(g.name) + '</b><span class="num">' + ymLabel(g.when) + '</span></div>' +
+        '<div class="muted">' + (left > 0 ? 'あと ' + left + ' か月' : left === 0 ? '今月' : '過ぎています') + (g.memo ? '　' + esc(g.memo) : '') + '</div>';
+      if (g.target){
+        h += '<div class="prog"><span style="width:' + Math.min(100, g.saved / g.target * 100) + '%"></span></div>' +
+          '<div class="row two" style="border:0;padding:0 0 6px"><span class="k"><span class="num">' + yen(g.saved) + '</span> / ' + yen(g.target) + '</span><span class="k">' + (rest ? '月に <b class="num" style="color:var(--text)">' + yen(per) + '</b>' : '達成') + '</span></div>';
+      }
+      h += ms.map(function(m){
+        return '<div class="ms' + (m.done ? ' done' : '') + '"><button class="chk' + (m.done ? ' on' : '') + '" type="button" data-pdone="' + esc(m.id) + '" aria-label="済みにする">' + IC.check + '</button>' +
+          '<span class="t">' + esc(m.name) + '</span><span class="num muted">' + ymLabel(m.when) + '</span><button class="x" type="button" data-pdel="' + esc(m.id) + '" aria-label="消す">' + IC.x + '</button></div>';
+      }).join('');
+      h += '<div class="chips" style="margin:10px 0 4px"><button type="button" data-addms="' + esc(g.id) + '">手前の段階を足す</button>' + (g.target ? '<button type="button" data-psaved="' + esc(g.id) + '">貯めた額を入れる</button>' : '') + '<button type="button" data-pdel="' + esc(g.id) + '">消す</button></div></div>';
+    });
+    $('v-plan').innerHTML = h + '</div>';
+  }
+  function setPlans(r){ S.plans = r; if (S.v === 'plan') renderPlan(); }
+  function ymAfter(n){ var d = new Date(today.getFullYear(), today.getMonth() + n, 1); return iso(d).slice(0,7); }
+  function goalSheet(){
+    openSheet('<h3>大きな出来事を足す</h3><form id="goalForm"><label class="fld"><span>出来事</span><input id="gN" placeholder="例：結婚式・車を買う・家を買う" autocomplete="off"></label>' +
+      '<div class="two-c"><label class="fld"><span>時期（半年より先）</span><input type="month" id="gW" value="' + ymAfter(12) + '" min="' + ymAfter(6) + '"></label><label class="fld"><span>目標額（なくてもよい）</span><input id="gT" inputmode="numeric" placeholder="3000000"></label></div>' +
+      '<label class="fld"><span>メモ（なくてもよい）</span><input id="gM" autocomplete="off"></label><button class="btn" type="submit">足す</button></form>');
+    $('goalForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+      call('addPlan', { kind:'目標', name: $('gN').value, when: $('gW').value, target: $('gT').value.replace(/[^0-9]/g, ''), memo: $('gM').value })
+        .then(function(r){ closeSheet(); setPlans(r); toast('足しました'); }).catch(fail).then(function(){ btn.disabled = false; });
+    });
+  }
+  function msSheet(gid){
+    var g = S.plans.filter(function(p){ return p.id === gid; })[0]; if (!g) return;
+    openSheet('<h3>' + esc(g.name) + ' の手前の段階</h3><form id="msForm"><label class="fld"><span>やること</span><input id="mN" placeholder="例：式場を決める・頭金を貯め終える" autocomplete="off"></label>' +
+      '<label class="fld"><span>いつまでに</span><input type="month" id="mW" value="' + ymAfter(3) + '"></label><button class="btn" type="submit">足す</button></form>');
+    $('msForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+      call('addPlan', { kind:'マイルストーン', parent: gid, name: $('mN').value, when: $('mW').value })
+        .then(function(r){ closeSheet(); setPlans(r); toast('足しました'); }).catch(fail).then(function(){ btn.disabled = false; });
+    });
+  }
+
   /* ---------- 画面の切り替えとシート ---------- */
-  var R = { home:renderHome, todo:renderTodo, money:renderMoney, cal:renderCal, set:renderSet };
+  var R = { home:renderHome, todo:renderTodo, money:renderMoney, cal:renderCal, plan:renderPlan, set:renderSet };
   function go(v){
-    S.v = v; ['home','todo','money','cal','set'].forEach(function(x){ $('v-' + x).hidden = x !== v; });
+    S.v = v; ['home','todo','money','cal','plan','set'].forEach(function(x){ $('v-' + x).hidden = x !== v; });
     document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on', b.dataset.v === v); });
     renderHdr(); R[v](); $('body').scrollTop = 0;
   }
-  function openSheet(h){ $('sheet').innerHTML = '<div class="grab"></div>' + h; $('sheetBg').hidden = false; }
-  function closeSheet(){ $('sheetBg').hidden = true; $('sheet').innerHTML = ''; cur = null; }
+  function openSheet(h){
+    var sh = $('sheet'); sh.style.transform = '';
+    sh.innerHTML = '<div class="grab-zone" id="grab" role="button" aria-label="閉じる（下に引っぱっても閉じます）"><div class="grab"></div></div>' + h;
+    $('sheetBg').hidden = false;
+  }
+  function closeSheet(){ $('sheetBg').hidden = true; $('sheet').innerHTML = ''; $('sheet').style.transform = ''; cur = null; }
+  // 上の横バーを下に引っぱると閉じる（80px 以上引いたら閉じる。少しなら元に戻る）
+  (function(){
+    var y0 = null, dy = 0, sh = $('sheet');
+    sh.addEventListener('touchstart', function(e){ if (!e.target.closest('#grab')) return; y0 = e.touches[0].clientY; dy = 0; sh.classList.add('dragging'); }, { passive: true });
+    sh.addEventListener('touchmove', function(e){ if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transform = 'translateY(' + dy + 'px)'; }, { passive: true });
+    sh.addEventListener('touchend', function(){
+      if (y0 == null) return; y0 = null; sh.classList.remove('dragging');
+      if (dy > 80) closeSheet(); else sh.style.transform = '';
+    });
+  })();
   function pickVal(k){ var b = document.querySelector('[data-pick="' + k + '"] .on'); return b ? b.dataset.val : ''; }
 
   document.addEventListener('click', function(e){
     var b = e.target.closest('button, a[data-reopen], .sheet-bg'); if (!b) return;
-    if (b.id === 'sheetBg'){ if (e.target === b) closeSheet(); return; }
+    if (b.id === 'sheetBg'){ if (e.target === b || e.target.closest('#grab')) closeSheet(); return; }
     var d = b.dataset;
+    if (d.act === 'openSet') return go('set');
+    if (d.act === 'goalSheet') return goalSheet();
+    if (d.addms) return msSheet(d.addms);
+    if (d.pdone){ var pm = S.plans.filter(function(p){ return p.id === d.pdone; })[0]; if (pm) call('updatePlan', pm.id, { done: !pm.done }).then(setPlans).catch(fail); return; }
+    if (d.pdel){ if (confirm('消しますか？（目標を消すと、手前の段階も消えます）')) call('deletePlan', d.pdel).then(setPlans).catch(fail); return; }
+    if (d.psaved){
+      var pg = S.plans.filter(function(p){ return p.id === d.psaved; })[0]; if (!pg) return;
+      var v = prompt('いままでに ' + pg.name + ' のために貯めた額（合計）', String(pg.saved || ''));
+      if (v != null) call('updatePlan', pg.id, { saved: v.replace(/[^0-9]/g, '') }).then(setPlans).catch(fail);
+      return;
+    }
     if (d.reopen){ e.preventDefault(); location.href = b.href; location.reload(); return; }
     if (d.v){
       if (d.v === S.v && d.v === 'todo') return todoSheet();
       if (d.v === S.v && d.v === 'money') return moneySheet();
+      if (d.v === S.v && d.v === 'plan') return goalSheet();
       return go(d.v);
     }
     if (b.parentNode && b.parentNode.dataset && b.parentNode.dataset.pick){ b.parentNode.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); return; }
@@ -736,6 +842,7 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
     var g0 = gridRange(S.viewMonth);
     call('getInitialData', { ym: ymOf(today), start: g0.start, end: g0.end }).then(function(d){
       S.names = d.names; S.cardPayer = d.cardPayer || d.names[0]; S.gomi = parseGomi(d.gomi); S.server = d.server || '';
+      S.gomiLink = d.gomiLink || 'https://www.city.minoh.lg.jp/seibi/02_howto/00how_to_top.html'; S.plans = d.plans || [];
       S.todos = d.todos; S.expenses = d.expenses; S.monthExpenses = d.expenses;
       S.events = d.events; S.homeEvents = d.events; S.calOk = d.calendarStatus === 'ok';
       showBanner(d); go('home');
@@ -767,13 +874,22 @@ button.row{width:100%;background:none;border-left:0;border-right:0;border-top:0;
       { id:nid(), date:iso(addDays(today,-2)), amount:2860, category:'食材', payer:'共有カード', memo:'ライフ 膳所店', tk:50, food:null, read:false, photo:'', items:[] },
       { id:nid(), date:iso(addDays(today,-3)), amount:1200, category:'食材', payer:'もも', memo:'八百屋', tk:50, food:null, read:false, photo:'', items:[] }
     ].filter(function(x){ return x.date.slice(0,7) === ymOf(today); });
+    var g1 = nid();
+    var plans = [
+      { id:g1, kind:'目標', parent:'', name:'結婚式', when:iso(new Date(today.getFullYear() + 1, today.getMonth() + 6, 1)).slice(0,7), target:3000000, saved:400000, memo:'', done:false },
+      { id:nid(), kind:'マイルストーン', parent:g1, name:'式場を決める', when:iso(new Date(today.getFullYear(), today.getMonth() + 4, 1)).slice(0,7), target:0, saved:0, memo:'', done:false }
+    ];
     var evs = [{ id:nid(), title:'ごはん', allDay:false, start:todayIso, end:todayIso, time:'19:00', endTime:'21:00', recurring:false }];
     function copy(a){ return JSON.parse(JSON.stringify(a)); }
     function byMonth(ym){ return copy(money.filter(function(x){ return x.date.slice(0,7) === ym; })); }
     function find(i){ return money.filter(function(x){ return x.id === i; })[0]; }
     return {
       login: function(){ return { names:names }; },
-      getInitialData: function(q){ return { demo:true, server:'お試し', names:names, gomi:'月:燃えるごみ,木:燃えるごみ,水:プラスチック', cardPayer:'たくや', calendarStatus:'ok', tzWarning:'', todos:copy(todos), expenses:byMonth(q.ym), events:copy(evs) }; },
+      getPlans: function(){ return copy(plans); },
+      addPlan: function(p){ plans.push({ id:nid(), kind:p.kind, parent:p.parent || '', name:p.name, when:p.when, target:+p.target || 0, saved:0, memo:p.memo || '', done:false }); return copy(plans); },
+      updatePlan: function(i, p){ plans.forEach(function(x){ if (x.id === i) Object.keys(p).forEach(function(k){ x[k] = k === 'saved' || k === 'target' ? +p[k] : p[k]; }); }); return copy(plans); },
+      deletePlan: function(i){ plans = plans.filter(function(x){ return x.id !== i && x.parent !== i; }); return copy(plans); },
+      getInitialData: function(q){ return { demo:true, server:'お試し', names:names, plans:copy(plans), gomiLink:'https://www.city.minoh.lg.jp/seibi/02_howto/00how_to_top.html', gomi:'火:燃えるごみ,金:燃えるごみ,第2・4水:かん・びん,第1・3月:ペットボトル・不燃・危険ごみ・大型ごみ', cardPayer:'たくや', calendarStatus:'ok', tzWarning:'', todos:copy(todos), expenses:byMonth(q.ym), events:copy(evs) }; },
       getTodos: function(){ return copy(todos); },
       addTodo: function(t){ todos.push({ id:nid(), title:t.title, who:t.who, due:t.due, time:t.time, done:false, created:String(Date.now()) }); return copy(todos); },
       toggleTodo: function(i){ todos.forEach(function(t){ if (t.id === i) t.done = !t.done; }); return copy(todos); },
