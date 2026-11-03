@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ふたりのホーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* テイスト：かわいい／06 ソフトポップ
+   色は4つだけ：クリーム（地）・こげ茶（文字）・ミルクピンク（面とボタン）・ミント（「今日」の強調だけ） */
+:root{
+  --bg:#fff7ec; --surface:#ffffff; --text:#4a3b32; --sub:#77655a;
+  --pink:#ffb7a5; --pink-soft:#ffe6dd; --pink-edge:#e8917c;
+  --mint:#7fd3c0; --mint-soft:#dcf4ee;
+  --edge:#f0dcc8; --line:#f3e5d6; --on-pink:#4a3b32;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#2a221d; --surface:#382d26; --text:#fbefe3; --sub:#cdb9aa;
+    --pink:#ffb7a5; --pink-soft:#4d3831; --pink-edge:#b8705f;
+    --mint:#7fd3c0; --mint-soft:#2f4640;
+    --edge:#1c1612; --line:#4a3c33; --on-pink:#3a2b23;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#2a221d; --surface:#382d26; --text:#fbefe3; --sub:#cdb9aa;
+  --pink:#ffb7a5; --pink-soft:#4d3831; --pink-edge:#b8705f;
+  --mint:#7fd3c0; --mint-soft:#2f4640;
+  --edge:#1c1612; --line:#4a3c33; --on-pink:#3a2b23;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Zen Maru Gothic","M PLUS Rounded 1c",sans-serif; font-weight:500;
+  line-height:1.6; -webkit-tap-highlight-color:transparent;
+}
+.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+[hidden]{display:none !important}
+
+/* ===== 骨組み：スマホは下にタブ、PC は左に縦メニュー ===== */
+.app{min-height:100vh;display:flex;flex-direction:column}
+.banner{background:var(--pink-soft);font-size:13px;padding:8px 16px;text-align:center}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 6px}
+.brand{font-weight:900;font-size:20px;display:flex;align-items:center;gap:8px}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--pink);box-shadow:0 3px 0 var(--pink-edge)}
+.pair{display:flex}
+.av{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:700;border:2px solid var(--text);background:var(--surface)}
+.av.p1{background:var(--pink);color:var(--on-pink);border-color:var(--pink-edge)}
+.pair .av + .av{margin-left:-8px}
+.theme-btn{border:0;background:none;color:var(--sub);font:inherit;font-size:12px;cursor:pointer;padding:6px}
+
+main{flex:1;width:100%;max-width:720px;margin:0 auto;padding:8px 16px 110px}
+.view{display:none}
+.view.on{display:block;animation:rise .25s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  background:var(--surface);border-top:2px solid var(--line);
+  padding:6px 8px calc(8px + env(safe-area-inset-bottom));
+}
+nav.tabs button{border:0;background:none;color:var(--sub);font:inherit;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:16px;cursor:pointer}
+nav.tabs button.on{color:var(--text);background:var(--pink-soft)}
+
+@media (min-width:960px){
+  .app{flex-direction:row;flex-wrap:wrap}
+  .banner{width:100%}
+  .side{width:232px;flex:none;padding:28px 16px 16px;position:sticky;top:0;height:100vh}
+  header.top{flex-direction:column;align-items:flex-start;padding:0 8px 20px}
+  nav.tabs{position:static;display:flex;flex-direction:column;gap:6px;background:none;border:0;padding:0}
+  nav.tabs button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:12px 16px}
+  main{flex:1;max-width:960px;padding:28px 32px 48px;margin:0}
+}
+@media (max-width:959px){ .side{display:contents} }
+
+/* ===== 部品 ===== */
+h1{font-size:26px;font-weight:900;margin:8px 0 4px;line-height:1.3}
+h2{font-size:17px;font-weight:900;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.lead{color:var(--sub);font-size:14px;margin:0 0 18px}
+.card{background:var(--surface);border-radius:24px;padding:18px;box-shadow:0 5px 0 var(--edge);margin-bottom:18px}
+.btn{
+  border:0;border-radius:24px;background:var(--pink);color:var(--on-pink);
+  font:inherit;font-weight:700;font-size:15px;padding:12px 20px;cursor:pointer;
+  box-shadow:0 5px 0 var(--pink-edge);transition:transform .08s, box-shadow .08s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--pink-edge)}
+.btn:disabled{opacity:.6}
+.btn.ghost{background:var(--surface);color:var(--text);box-shadow:0 5px 0 var(--edge);border:2px solid var(--line)}
+.btn.ghost:active{box-shadow:0 1px 0 var(--edge)}
+.btn.sm{font-size:13px;padding:8px 14px}
+input,select{font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:2px solid var(--line);border-radius:24px;padding:10px 16px;min-width:0;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--pink)}
+input[type=checkbox]{width:auto}
+.row{display:flex;gap:8px;align-items:center}
+.muted{color:var(--sub);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 10px;border-radius:24px;background:var(--pink-soft)}
+.chip.today{background:var(--mint-soft)}
+.chip.today::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mint)}
+.empty{color:var(--sub);font-size:14px;padding:8px 0}
+.x{border:0;background:none;color:var(--sub);cursor:pointer;padding:6px;border-radius:50%;display:grid;place-items:center;flex:none}
+.x svg{width:18px;height:18px}
+
+/* ホーム */
+.home-grid{display:grid;gap:0 18px}
+@media (min-width:960px){ .home-grid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.big{font-size:34px;font-weight:700;line-height:1.1}
+.big small{font-size:14px;color:var(--sub);margin-left:4px}
+.card .more{margin-top:12px}
+.floaty{animation:floaty 4s ease-in-out infinite}
+@keyframes floaty{50%{transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){ .floaty,.view.on{animation:none} }
+
+.ev{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:2px dashed var(--line)}
+.ev:first-child{border-top:0}
+.ev .t{width:52px;flex:none;font-size:14px;color:var(--sub)}
+.ev .body{flex:1;min-width:0}
+.ev .what{font-weight:700;overflow-wrap:anywhere}
+
+/* ToDo */
+.todo{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:2px dashed var(--line)}
+.todo:first-child{border-top:0}
+.check{width:28px;height:28px;flex:none;border-radius:50%;border:2px solid var(--pink-edge);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--on-pink);padding:0}
+.check svg{width:16px;height:16px;opacity:0}
+.todo.done .check{background:var(--pink)}
+.todo.done .check svg{opacity:1}
+.todo .body{flex:1;min-width:0}
+.todo .ttl{font-weight:700;overflow-wrap:anywhere}
+.todo.done .ttl{text-decoration:line-through;color:var(--sub)}
+.todo .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.seg{display:inline-flex;background:var(--bg);border:2px solid var(--line);border-radius:24px;padding:3px}
+.seg button{border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--sub);padding:5px 12px;border-radius:24px;cursor:pointer}
+.seg button.on{background:var(--pink);color:var(--on-pink)}
+.add-form{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.add-form .wide{grid-column:1/-1}
+@media (min-width:600px){ .add-form{grid-template-columns:minmax(0,1fr) 130px 160px auto} .add-form .wide{grid-column:auto} }
+
+/* 家計簿 */
+.month-nav{display:flex;align-items:center;gap:10px}
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.split .who{display:flex;align-items:center;gap:8px;font-size:14px}
+.split .amt{font-size:20px;font-weight:700;margin-top:4px}
+.bar{height:12px;border-radius:12px;background:var(--line);overflow:hidden;margin-top:14px;display:flex}
+.bar span{display:block;height:100%;background:var(--pink)}
+.settle{margin-top:14px;padding:12px 14px;border-radius:24px;background:var(--pink-soft);font-weight:700;font-size:14px}
+.kform{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.kform .wide{grid-column:1/-1}
+.exp{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px dashed var(--line)}
+.exp:first-child{border-top:0}
+.exp .d{width:40px;flex:none;color:var(--sub);font-size:13px;text-align:center}
+.exp .body{flex:1;min-width:0;overflow-wrap:anywhere}
+.exp .amt{font-weight:700}
+.cats{display:grid;gap:8px}
+.cat{display:grid;grid-template-columns:80px minmax(0,1fr) 84px;gap:10px;align-items:center;font-size:14px}
+.cat .track{height:10px;border-radius:10px;background:var(--line);overflow:hidden}
+.cat .track span{display:block;height:100%;background:var(--pink);border-radius:10px}
+.cat .num{text-align:right}
+
+/* カレンダー */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head .m{font-size:20px;font-weight:900}
+.icon-btn{border:2px solid var(--line);background:var(--surface);color:var(--text);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 0 var(--edge);flex:none}
+.icon-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.grid7 .w{font-size:12px;color:var(--sub);padding:4px 0}
+.day{min-width:0;aspect-ratio:1/1;border:0;border-radius:16px;background:none;color:var(--text);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:15px}
+.day.out{opacity:.35}
+.day.sel{background:var(--pink-soft)}
+.day.today .n{background:var(--mint);color:#24433b;border-radius:50%;width:28px;height:28px;display:grid;place-items:center;font-weight:700}
+.day .dots{display:flex;gap:2px;height:6px}
+.day .dots i{width:6px;height:6px;border-radius:50%;background:var(--pink-edge)}
+@media (min-width:960px){
+  .cal-wrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}
+  .day{aspect-ratio:auto;height:64px}
+}
+.ev-form{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+.ev-form .wide{grid-column:1/-1}
+.ev-form label.chk{display:flex;align-items:center;gap:8px;font-size:14px}
+
+/* 読み込み中と通知 */
+.loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:50;font-weight:700;color:var(--sub)}
+.loading .dot{width:16px;height:16px;border-radius:50%;background:var(--pink);box-shadow:0 4px 0 var(--pink-edge);margin:0 auto 12px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:24px;font-size:14px;font-weight:700;z-index:60;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (min-width:960px){ .toast{bottom:32px} }
+
+/* 合言葉の画面と専用URLの窓 */
+.overlay{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;padding:24px 16px;overflow:auto}
+.overlay.dim{background:rgba(42,34,29,.45)}
+.panel{width:100%;max-width:440px;background:var(--surface);border-radius:24px;padding:24px 20px;box-shadow:0 5px 0 var(--edge)}
+.panel h2{font-size:20px}
+.panel p{font-size:14px;color:var(--sub);margin:0 0 14px}
+.panel .stack{display:grid;gap:12px}
+.urlbox{display:grid;gap:6px;margin-top:6px}
+.urlbox label{font-weight:700;font-size:14px}
+.urlbox .row input{font-size:13px;font-family:"IBM Plex Mono",monospace}
+.urlbox .row .btn{flex:none;white-space:nowrap}
+.panel a.btn{text-decoration:none}
+</style>
+</head>
+<body>
+<div class="loading" id="loading"><div><div class="dot floaty"></div>読み込み中…</div></div>
+<div class="toast" id="toast"></div>
+
+<!-- 合言葉を入れる画面（専用URLから開いたときは出ない） -->
+<div class="overlay" id="login" hidden>
+  <div class="panel">
+    <h2>ふたりのホーム</h2>
+    <form class="stack" id="loginForm">
+      <p>合言葉を入れてください。スプレッドシートの「設定」シートに書いてあります。</p>
+      <input id="loginPass" autocomplete="off" autocapitalize="off" placeholder="合言葉">
+      <button class="btn" type="submit">入る</button>
+    </form>
+    <div class="stack" id="whoAsk" hidden>
+      <p>あなたはどちらですか？（家計簿の「払った人」が最初からあなたになります）</p>
+      <div class="row" id="whoBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 専用URLの窓 -->
+<div class="overlay dim" id="urlPanel" hidden>
+  <div class="panel">
+    <h2>ふたりの専用URL</h2>
+    <p>合言葉入りのURLです。これを開けば、合言葉を入れずに1回で入れます。<b>2人以外には送らないでください。</b></p>
+    <div class="stack" id="urlList"></div>
+    <p style="margin-top:14px">自分の分は、このURLで開き直してからブックマーク（iPhoneは「ホーム画面に追加」）。相手の分は、LINEなどで送ります。</p>
+    <button class="btn ghost" type="button" id="urlClose">閉じる</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="side">
+    <header class="top">
+      <div class="brand"><span class="dot floaty"></span>ふたりのホーム</div>
+      <div class="row">
+        <div class="pair"><span class="av p1" id="av1"></span><span class="av" id="av2"></span></div>
+        <button class="theme-btn" id="urlBtn" type="button">専用URL</button>
+        <button class="theme-btn" id="themeBtn" type="button">明／暗</button>
+      </div>
+    </header>
+    <nav class="tabs" id="tabs">
+      <button data-v="home" class="on" type="button"><svg class="i" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>ホーム</button>
+      <button data-v="todo" type="button"><svg class="i" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>ToDo</button>
+      <button data-v="money" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>家計簿</button>
+      <button data-v="cal" type="button"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>カレンダー</button>
+    </nav>
+  </div>
+
+  <main>
+    <!-- ===== ホーム ===== -->
+    <section class="view on" id="v-home">
+      <h1 id="hello"></h1>
+      <p class="lead" id="todayLabel"></p>
+      <div class="home-grid">
+        <div class="card">
+          <h2><svg class="i" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>きょうとあしたの予定</h2>
+          <div id="homeEvents"></div>
+          <div class="more"><button class="btn ghost sm" data-go="cal" type="button">カレンダーを見る</button></div>
+        </div>
+        <div class="card">
+          <h2><svg class="i" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>のこりのやること</h2>
+          <div class="big num" id="homeTodoCount"></div>
+          <div id="homeTodos" style="margin-top:8px"></div>
+          <div class="more"><button class="btn ghost sm" data-go="todo" type="button">ToDoを開く</button></div>
+        </div>
+        <div class="card">
+          <h2><svg class="i" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>今月のふたりの支出</h2>
+          <div class="big num" id="homeMoney"></div>
+          <div class="settle" id="homeSettle"></div>
+          <div class="more"><button class="btn ghost sm" data-go="money" type="button">家計簿を開く</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ToDo ===== -->
+    <section class="view" id="v-todo">
+      <h1>ふたりのToDo</h1>
+      <p class="lead">どちらが入れても、ふたりの画面に出ます。</p>
+      <div class="card">
+        <form class="add-form" id="todoForm">
+          <input class="wide" id="todoInput" placeholder="例：洗剤を買う" autocomplete="off">
+          <select id="todoWho" aria-label="だれがやるか"></select>
+          <input type="date" id="todoDue" aria-label="期限（なくてもよい）">
+          <button class="btn wide" type="submit"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>追加</button>
+        </form>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <div class="seg" id="todoFilter">
+          <button class="on" data-f="open" type="button">のこり</button><button data-f="done" type="button">おわった</button><button data-f="all" type="button">ぜんぶ</button>
+        </div>
+      </div>
+      <div class="card"><div id="todoList"></div></div>
+    </section>
+
+    <!-- ===== 家計簿 ===== -->
+    <section class="view" id="v-money">
+      <h1>ふたりの家計簿</h1>
+      <p class="lead">ふたりで使ったお金だけを入れて、月末に半分ずつにします。</p>
+      <div class="card">
+        <div class="month-nav">
+          <button class="icon-btn" id="mPrev" type="button" aria-label="前の月"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+          <div class="muted" id="moneyMonth" style="flex:1;text-align:center"></div>
+          <button class="icon-btn" id="mNext" type="button" aria-label="次の月"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <div class="big num" id="moneyTotal" style="margin-top:10px"></div>
+        <div class="split" id="moneySplit"></div>
+        <div class="bar"><span id="moneyBar"></span></div>
+        <div class="settle" id="moneySettle"></div>
+      </div>
+      <div class="card">
+        <h2>入れる</h2>
+        <form class="kform" id="moneyForm">
+          <input class="wide num" id="mAmt" inputmode="numeric" placeholder="金額（例：3200）" autocomplete="off">
+          <select id="mCat" aria-label="分類"></select>
+          <select id="mWho" aria-label="払った人"></select>
+          <input type="date" id="mDate" aria-label="日付">
+          <input id="mMemo" placeholder="メモ（なくてもよい）" autocomplete="off">
+          <button class="btn wide" type="submit">記録</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>分類ごと</h2>
+        <div class="cats" id="moneyCats"></div>
+      </div>
+      <div class="card">
+        <h2>この月の記録</h2>
+        <div id="moneyList"></div>
+      </div>
+    </section>
+
+    <!-- ===== カレンダー ===== -->
+    <section class="view" id="v-cal">
+      <h1>ふたりのカレンダー</h1>
+      <p class="lead">Googleカレンダーの共有カレンダーを表示しています。</p>
+      <div class="cal-wrap">
+        <div class="card">
+          <div class="cal-head">
+            <button class="icon-btn" id="calPrev" type="button" aria-label="前の月"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+            <div class="m num" id="calTitle"></div>
+            <button class="icon-btn" id="calNext" type="button" aria-label="次の月"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+          <div class="grid7" id="calGrid"></div>
+        </div>
+        <div class="card">
+          <h2 id="calDayTitle"></h2>
+          <div id="calDayList"></div>
+          <div class="more" style="margin-top:14px"><button class="btn sm" type="button" id="calAdd"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>この日に予定を入れる</button></div>
+          <form class="ev-form" id="evForm" hidden>
+            <input class="wide" id="evTitle" placeholder="例：ふたりでごはん" autocomplete="off">
+            <label class="chk wide"><input type="checkbox" id="evAllDay">終日</label>
+            <input type="time" id="evStart" value="19:00" aria-label="はじまり">
+            <input type="time" id="evEnd" value="20:00" aria-label="おわり">
+            <button class="btn ghost" type="button" id="evCancel">やめる</button>
+            <button class="btn" type="submit">入れる</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var CATS = ['食費','外食','日用品','おでかけ','家賃・光熱','その他'];
+  var WD = ['日','月','火','水','木','金','土'];
+  var BOTH = 'ふたり';
+  var X_ICON = '<svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+  /* ---------- 日付の道具（画面側は 'yyyy-MM-dd' の文字列でやりとりする） ---------- */
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function iso(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+  function fromIso(s){ var p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function md(d){ return (d.getMonth()+1) + '/' + d.getDate() + '（' + WD[d.getDay()] + '）'; }
+  function ymOf(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1); }
+  function yen(n){ return '¥' + Number(n).toLocaleString('ja-JP'); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function $(id){ return document.getElementById(id); }
+
+  var today = new Date(); today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  var todayIso = iso(today);
+
+  /* ---------- データ係（Code.gs）の住所 ----------
+     Apps Script の「デプロイを管理」に出ている ウェブアプリの URL。
+     デプロイを「新バージョン」で更新しているかぎり変わらない */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyLvq9crZc7WOE-CNM_CXekWQAnvQe7OoHsfZT_YbrGJOdCxaS9KYJJ0zEtZAZzGaM1iQ/exec';
+
+  /* ---------- 合言葉と「自分はだれか」 ----------
+     専用URLは …/futari-home/#key=合言葉&me=名前 の形。
+     # のうしろはサーバーに送られないので、GitHub の記録に合言葉が残らない */
+  var IS_DEMO = location.protocol === 'file:' || /[?&]demo\b/.test(location.search); // PC で直接開いたとき用のお試しモード
+  function load(k){ try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
+  function save(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
+  function hashParam(k){
+    var m = location.hash.replace(/^#/, '').split('&').filter(function(p){ return p.split('=')[0] === k; })[0];
+    if (!m) return '';
+    try { return decodeURIComponent(m.slice(k.length + 1)); } catch(e) { return ''; }
+  }
+  var KEY = hashParam('key') || load('futari-key');
+  var ME = hashParam('me') || load('futari-me');
+  if (hashParam('key')) save('futari-key', KEY);
+  if (hashParam('me')) save('futari-me', ME);
+  function personalUrl(name){
+    return location.origin + location.pathname + '#key=' + encodeURIComponent(KEY) + '&me=' + encodeURIComponent(name);
+  }
+
+  /* ---------- データ係を呼ぶ。合言葉を毎回つける ----------
+     credentials:'omit' で Google のログイン情報を送らない（アカウントが複数あっても迷わない）。
+     本文を文字列で送ると、ブラウザの事前確認が入らずに届く */
+  function call(fn){
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (IS_DEMO) {
+      return new Promise(function(resolve, reject){
+        try { resolve(DEMO[fn].apply(null, args)); } catch(e) { reject(e); }
+      });
+    }
+    var key = fn === 'login' ? args.shift() : KEY;
+    return fetch(API_URL, {
+      method: 'POST',
+      credentials: 'omit',
+      redirect: 'follow',
+      body: JSON.stringify({ fn: fn, key: key, args: args })
+    }).then(function(r){
+      if (!r.ok) throw new Error('データ係につながりませんでした（' + r.status + '）');
+      return r.json();
+    }, function(){
+      throw new Error('つながりませんでした。電波を確かめて、もう一度試してください');
+    }).then(function(res){
+      if (!res || !res.ok) throw new Error((res && res.error) || 'うまくいきませんでした');
+      return res.data;
+    });
+  }
+  var toastTimer;
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 2600);
+  }
+  function fail(e){ toast((e && e.message) ? e.message.replace(/^Error:\s*/, '') : 'うまくいきませんでした'); }
+
+  /* ---------- 状態 ---------- */
+  var S = {
+    names: ['', ''], urls: [], todos: [], expenses: [], events: [], homeEvents: [],
+    moneyMonth: new Date(today.getFullYear(), today.getMonth(), 1),
+    viewMonth: new Date(today.getFullYear(), today.getMonth(), 1),
+    selected: today, filter: 'open', calOk: false, thisMonthExpenses: []
+  };
+  function gridRange(m){
+    var start = addDays(m, -m.getDay());
+    return { start: iso(start), end: iso(addDays(start, 42)), startDate: start };
+  }
+
+  /* ---------- タブ ---------- */
+  function show(v){
+    document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('on', s.id === 'v-' + v); });
+    document.querySelectorAll('#tabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.v === v); });
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('#tabs button').forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.v); }); });
+  document.querySelectorAll('[data-go]').forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.go); }); });
+
+  var root = document.documentElement;
+  try { if (localStorage.getItem('theme')) root.dataset.theme = localStorage.getItem('theme'); } catch(e) {}
+  $('themeBtn').addEventListener('click', function(){
+    var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('theme', root.dataset.theme); } catch(e) {}
+  });
+
+  /* ---------- 予定を日ごとに並べる（何日も続く予定は毎日に出す） ---------- */
+  function eventsOn(list, dayIso){
+    return list.filter(function(e){ return e.start <= dayIso && dayIso <= e.end; })
+      .sort(function(a,b){ return (a.allDay ? '0' : a.time) < (b.allDay ? '0' : b.time) ? -1 : 1; });
+  }
+
+  /* ---------- ホーム ---------- */
+  function renderHome(){
+    var h = new Date().getHours();
+    $('hello').textContent = (h < 11 ? 'おはよう' : (h < 18 ? 'こんにちは' : 'おつかれさま')) + '、' + S.names[0] + 'と' + S.names[1];
+    $('todayLabel').textContent = 'きょうは ' + today.getFullYear() + '年' + md(today);
+    var tmr = iso(addDays(today,1)), html = '';
+    if (!S.calOk) html = '<div class="empty">カレンダーはまだつながっていません</div>';
+    else {
+      [[todayIso,'<span class="chip today">きょう</span>'],[tmr,'<span class="chip">あした</span>']].forEach(function(p){
+        eventsOn(S.homeEvents, p[0]).forEach(function(e){
+          html += '<div class="ev"><div class="t num">' + e.time + '</div><div class="body"><div class="what">' + esc(e.title) + '</div>' + p[1] + '</div></div>';
+        });
+      });
+      if (!html) html = '<div class="empty">予定はありません</div>';
+    }
+    $('homeEvents').innerHTML = html;
+    var open = S.todos.filter(function(t){ return !t.done; });
+    $('homeTodoCount').innerHTML = open.length + '<small>件</small>';
+    $('homeTodos').innerHTML = open.slice(0,3).map(function(t){ return '<div class="muted">・' + esc(t.title) + '</div>'; }).join('');
+    var s = sums(S.thisMonthExpenses);
+    $('homeMoney').textContent = yen(s.total);
+    $('homeSettle').textContent = settleText(s);
+  }
+
+  /* ---------- ToDo ---------- */
+  function sortTodos(a, b){
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (a.due && b.due) return a.due < b.due ? -1 : 1;
+    if (a.due !== b.due) return a.due ? -1 : 1;
+    return a.created < b.created ? 1 : -1;
+  }
+  function renderTodos(){
+    var list = S.todos.filter(function(t){ return S.filter === 'all' || (S.filter === 'done') === t.done; }).sort(sortTodos);
+    $('todoList').innerHTML = list.length ? list.map(function(t){
+      var due = '';
+      if (t.due && !t.done) due = t.due === todayIso ? '<span class="chip today">きょうまで</span>' : '<span class="chip">' + md(fromIso(t.due)) + 'まで</span>';
+      return '<div class="todo' + (t.done ? ' done' : '') + '">' +
+        '<button class="check" type="button" data-id="' + esc(t.id) + '" aria-label="完了の切り替え"><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></button>' +
+        '<div class="body"><div class="ttl">' + esc(t.title) + '</div><div class="meta"><span class="chip">' + esc(t.who) + '</span>' + due + '</div></div>' +
+        '<button class="x" type="button" data-del="' + esc(t.id) + '" aria-label="消す">' + X_ICON + '</button></div>';
+    }).join('') : '<div class="empty">ここには何もありません</div>';
+  }
+  $('todoList').addEventListener('click', function(e){
+    var c = e.target.closest('.check'), d = e.target.closest('[data-del]');
+    if (c) {
+      var t = S.todos.filter(function(x){ return x.id === c.dataset.id; })[0];
+      if (t) { t.done = !t.done; renderTodos(); renderHome(); } // 先に見た目を変えて、待たせない
+      call('toggleTodo', c.dataset.id).then(setTodos).catch(function(err){ fail(err); reloadTodos(); });
+    }
+    if (d && confirm('このやることを消しますか？')) {
+      call('deleteTodo', d.dataset.del).then(function(r){ setTodos(r); toast('消しました'); }).catch(fail);
+    }
+  });
+  function setTodos(r){ S.todos = r; renderTodos(); renderHome(); }
+  function reloadTodos(){ call('getTodos').then(setTodos).catch(fail); }
+  document.querySelectorAll('#todoFilter button').forEach(function(b){
+    b.addEventListener('click', function(){
+      S.filter = b.dataset.f;
+      document.querySelectorAll('#todoFilter button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      renderTodos();
+    });
+  });
+  $('todoForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var v = $('todoInput').value.trim();
+    if (!v) return;
+    var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+    call('addTodo', { title: v, who: $('todoWho').value, due: $('todoDue').value }, ME)
+      .then(function(r){ setTodos(r); $('todoInput').value = ''; $('todoDue').value = ''; toast('追加しました'); })
+      .catch(fail).then(function(){ btn.disabled = false; });
+  });
+
+  /* ---------- 家計簿 ---------- */
+  function sums(list){
+    var s = { p1: 0, p2: 0, total: 0, cats: {} };
+    list.forEach(function(x){
+      if (x.payer === S.names[0]) s.p1 += x.amount; else if (x.payer === S.names[1]) s.p2 += x.amount;
+      s.total += x.amount; s.cats[x.category] = (s.cats[x.category] || 0) + x.amount;
+    });
+    return s;
+  }
+  function settleText(s){
+    var diff = Math.round((s.p1 - s.p2) / 2);
+    if (diff === 0) return 'ちょうど半分ずつです';
+    return diff > 0 ? S.names[1] + ' → ' + S.names[0] + ' に ' + yen(diff) + ' で半分ずつ'
+                    : S.names[0] + ' → ' + S.names[1] + ' に ' + yen(-diff) + ' で半分ずつ';
+  }
+  function renderMoney(){
+    var m = S.moneyMonth, s = sums(S.expenses);
+    var isThis = ymOf(m) === ymOf(today);
+    $('moneyMonth').textContent = m.getFullYear() + '年' + (m.getMonth()+1) + '月' + (isThis ? '（きょうまで）' : '');
+    $('moneyTotal').textContent = yen(s.total);
+    $('moneySplit').innerHTML =
+      '<div><div class="who"><span class="av p1">' + esc(S.names[0].charAt(0)) + '</span>' + esc(S.names[0]) + 'が払った</div><div class="amt num">' + yen(s.p1) + '</div></div>' +
+      '<div><div class="who"><span class="av">' + esc(S.names[1].charAt(0)) + '</span>' + esc(S.names[1]) + 'が払った</div><div class="amt num">' + yen(s.p2) + '</div></div>';
+    $('moneyBar').style.width = (s.total ? Math.round(s.p1 / s.total * 100) : 50) + '%';
+    $('moneySettle').textContent = settleText(s);
+    var keys = Object.keys(s.cats).sort(function(a,b){ return s.cats[b] - s.cats[a]; });
+    var max = keys.length ? s.cats[keys[0]] : 1;
+    $('moneyCats').innerHTML = keys.length ? keys.map(function(k){
+      return '<div class="cat"><div>' + esc(k) + '</div><div class="track"><span style="width:' + Math.round(s.cats[k]/max*100) + '%"></span></div><div class="num">' + yen(s.cats[k]) + '</div></div>';
+    }).join('') : '<div class="empty">まだ記録がありません</div>';
+    var list = S.expenses.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    $('moneyList').innerHTML = list.length ? list.map(function(x){
+      var d = fromIso(x.date);
+      return '<div class="exp"><div class="d num">' + (d.getMonth()+1) + '/' + d.getDate() + '</div>' +
+        '<div class="body"><div>' + esc(x.category) + (x.memo ? '<span class="muted">　' + esc(x.memo) + '</span>' : '') + '</div><div class="muted">' + esc(x.payer) + 'が払った</div></div>' +
+        '<div class="amt num">' + yen(x.amount) + '</div>' +
+        '<button class="x" type="button" data-del="' + esc(x.id) + '" aria-label="消す">' + X_ICON + '</button></div>';
+    }).join('') : '<div class="empty">まだ記録がありません</div>';
+  }
+  function setExpenses(r){
+    S.expenses = r;
+    if (ymOf(S.moneyMonth) === ymOf(today)) S.thisMonthExpenses = r;
+    renderMoney(); renderHome();
+  }
+  function loadMoney(){ call('getExpenses', ymOf(S.moneyMonth)).then(setExpenses).catch(fail); }
+  $('mPrev').addEventListener('click', function(){ S.moneyMonth = new Date(S.moneyMonth.getFullYear(), S.moneyMonth.getMonth()-1, 1); loadMoney(); });
+  $('mNext').addEventListener('click', function(){ S.moneyMonth = new Date(S.moneyMonth.getFullYear(), S.moneyMonth.getMonth()+1, 1); loadMoney(); });
+  $('moneyList').addEventListener('click', function(e){
+    var d = e.target.closest('[data-del]');
+    if (d && confirm('この記録を消しますか？')) {
+      call('deleteExpense', d.dataset.del, ymOf(S.moneyMonth)).then(function(r){ setExpenses(r); toast('消しました'); }).catch(fail);
+    }
+  });
+  $('moneyForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var n = parseInt($('mAmt').value.replace(/[^0-9]/g,''), 10);
+    if (!n) { toast('金額を入れてください'); return; }
+    var date = $('mDate').value || todayIso;
+    var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+    call('addExpense', { date: date, amount: n, category: $('mCat').value, payer: $('mWho').value, memo: $('mMemo').value.trim() }, ME)
+      .then(function(r){
+        S.moneyMonth = new Date(fromIso(date).getFullYear(), fromIso(date).getMonth(), 1);
+        setExpenses(r); $('mAmt').value = ''; $('mMemo').value = ''; toast('記録しました');
+      })
+      .catch(fail).then(function(){ btn.disabled = false; });
+  });
+
+  /* ---------- カレンダー ---------- */
+  function renderCal(){
+    var m = S.viewMonth, g = gridRange(m);
+    $('calTitle').textContent = m.getFullYear() + '年' + (m.getMonth()+1) + '月';
+    var html = WD.map(function(w){ return '<div class="w">' + w + '</div>'; }).join('');
+    for (var i = 0; i < 42; i++){
+      var d = addDays(g.startDate, i), k = iso(d);
+      var cnt = eventsOn(S.events, k).length, dots = '';
+      for (var j = 0; j < Math.min(cnt,3); j++) dots += '<i></i>';
+      var cls = 'day' + (d.getMonth() !== m.getMonth() ? ' out' : '') + (k === todayIso ? ' today' : '') + (k === iso(S.selected) ? ' sel' : '');
+      html += '<button type="button" class="' + cls + '" data-d="' + k + '"><span class="n num">' + d.getDate() + '</span><span class="dots">' + dots + '</span></button>';
+    }
+    $('calGrid').innerHTML = html;
+    $('calDayTitle').textContent = md(S.selected) + 'の予定';
+    var list = eventsOn(S.events, iso(S.selected));
+    $('calDayList').innerHTML = !S.calOk ? '<div class="empty">カレンダーはまだつながっていません（設定シートにカレンダーIDを入れてください）</div>'
+      : list.length ? list.map(function(e){
+        return '<div class="ev"><div class="t num">' + e.time + '</div><div class="body"><div class="what">' + esc(e.title) + '</div>' +
+          (e.endTime ? '<div class="muted">〜' + e.endTime + '</div>' : '') + '</div>' +
+          (e.recurring ? '' : '<button class="x" type="button" data-del="' + esc(e.id) + '" aria-label="消す">' + X_ICON + '</button>') + '</div>';
+      }).join('') : '<div class="empty">予定はありません</div>';
+    $('calAdd').hidden = !S.calOk || !$('evForm').hidden;
+  }
+  function setEvents(r){
+    S.events = r;
+    var t = iso(addDays(today,1));
+    // ホームに出す「きょう・あした」は、表示中の月に入っていれば最新を使う
+    var g = gridRange(S.viewMonth);
+    if (g.start <= todayIso && t < g.end) S.homeEvents = r;
+    renderCal(); renderHome();
+  }
+  function loadEvents(){
+    if (!S.calOk) { renderCal(); return; }
+    var g = gridRange(S.viewMonth);
+    call('getEvents', g.start, g.end).then(setEvents).catch(fail);
+  }
+  $('calGrid').addEventListener('click', function(e){
+    var b = e.target.closest('.day'); if (!b) return;
+    S.selected = fromIso(b.dataset.d); renderCal();
+  });
+  $('calPrev').addEventListener('click', function(){ S.viewMonth = new Date(S.viewMonth.getFullYear(), S.viewMonth.getMonth()-1, 1); renderCal(); loadEvents(); });
+  $('calNext').addEventListener('click', function(){ S.viewMonth = new Date(S.viewMonth.getFullYear(), S.viewMonth.getMonth()+1, 1); renderCal(); loadEvents(); });
+  $('calAdd').addEventListener('click', function(){ $('evForm').hidden = false; $('calAdd').hidden = true; $('evTitle').focus(); });
+  $('evCancel').addEventListener('click', function(){ $('evForm').hidden = true; renderCal(); });
+  $('evAllDay').addEventListener('change', function(){ $('evStart').disabled = $('evEnd').disabled = this.checked; });
+  $('evForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var title = $('evTitle').value.trim();
+    if (!title) { toast('予定の名前を入れてください'); return; }
+    var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+    var g = gridRange(S.viewMonth);
+    call('addEvent', { title: title, date: iso(S.selected), allDay: $('evAllDay').checked, start: $('evStart').value, end: $('evEnd').value }, { start: g.start, end: g.end })
+      .then(function(r){ $('evTitle').value = ''; $('evForm').hidden = true; setEvents(r); toast('カレンダーに入れました'); })
+      .catch(fail).then(function(){ btn.disabled = false; });
+  });
+  $('calDayList').addEventListener('click', function(e){
+    var d = e.target.closest('[data-del]');
+    if (d && confirm('この予定をGoogleカレンダーから消しますか？')) {
+      var g = gridRange(S.viewMonth);
+      call('deleteEvent', d.dataset.del, { start: g.start, end: g.end }).then(function(r){ setEvents(r); toast('消しました'); }).catch(fail);
+    }
+  });
+
+  /* ---------- 最初の読み込み ---------- */
+  function fillSelects(){
+    var who = [BOTH, S.names[0], S.names[1]];
+    $('todoWho').innerHTML = who.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join('');
+    $('mCat').innerHTML = CATS.map(function(c){ return '<option>' + esc(c) + '</option>'; }).join('');
+    $('mWho').innerHTML = S.names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + 'が払った</option>'; }).join('');
+    if (ME && S.names.indexOf(ME) >= 0) $('mWho').value = ME;
+    $('mDate').value = todayIso;
+    $('av1').textContent = S.names[0].charAt(0);
+    $('av2').textContent = S.names[1].charAt(0);
+  }
+  function showBanner(d){
+    var msg = [];
+    if (d.demo) msg.push('お試しモードです（GASの外で開いているため、保存されません）');
+    if (d.calendarStatus === 'unset') msg.push('カレンダーがまだつながっていません。スプレッドシートの「設定」シートにカレンダーIDを入れてください');
+    if (d.calendarStatus === 'noaccess') msg.push('カレンダーを開けませんでした。カレンダーIDと、そのカレンダーが共有されているかを確認してください');
+    if (d.tzWarning) msg.push('Apps Script のタイムゾーンが「' + d.tzWarning + '」になっています。プロジェクトの設定で「日本標準時」にしてください');
+    if (msg.length) { $('banner').innerHTML = msg.map(esc).join('<br>'); $('banner').hidden = false; }
+  }
+  /* ---------- 合言葉の画面 ---------- */
+  var cameByForm = false; // 合言葉を手で入れて入ったか（そのときは専用URLを案内する）
+  function showLogin(){
+    $('loading').hidden = true;
+    $('login').hidden = false; $('loginForm').hidden = false; $('whoAsk').hidden = true;
+    $('loginPass').focus();
+  }
+  $('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var pass = $('loginPass').value.trim();
+    if (!pass) return;
+    var btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
+    call('login', pass).then(function(){
+      KEY = pass; save('futari-key', pass); cameByForm = true;
+      $('login').hidden = true; $('loading').hidden = false;
+      loadApp();
+    }).catch(fail).then(function(){ btn.disabled = false; });
+  });
+  function askWho(){
+    $('login').hidden = false; $('loginForm').hidden = true; $('whoAsk').hidden = false;
+    $('whoBtns').innerHTML = S.names.map(function(n){ return '<button class="btn" type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>'; }).join('');
+  }
+  $('whoBtns').addEventListener('click', function(e){
+    var b = e.target.closest('[data-n]'); if (!b) return;
+    ME = b.dataset.n; save('futari-me', ME);
+    $('login').hidden = true;
+    fillSelects();
+    if (cameByForm) openUrls();
+  });
+
+  /* ---------- 専用URLの窓 ---------- */
+  function openUrls(){
+    $('urlList').innerHTML = S.urls.map(function(u, i){
+      var mine = u.name === ME;
+      return '<div class="urlbox"><label for="url' + i + '">' + esc(u.name) + '用' + (mine ? '（あなた）' : '') + '</label>' +
+        '<div class="row"><input id="url' + i + '" readonly value="' + esc(u.url) + '"><button class="btn sm" type="button" data-copy="url' + i + '">コピー</button></div>' +
+        (mine ? '<a class="btn sm ghost" href="' + esc(u.url) + '" data-reopen="1">このURLで開き直す</a>' : '') + '</div>';
+    }).join('');
+    $('urlPanel').hidden = false;
+  }
+  $('urlBtn').addEventListener('click', openUrls);
+  $('urlClose').addEventListener('click', function(){ $('urlPanel').hidden = true; });
+  $('urlList').addEventListener('click', function(e){
+    // # だけ違う URL は、そのままだと読み込み直されないので、自分で開き直す
+    var a = e.target.closest('[data-reopen]');
+    if (a) { e.preventDefault(); location.href = a.href; location.reload(); return; }
+    var b = e.target.closest('[data-copy]'); if (!b) return;
+    var inp = $(b.dataset.copy);
+    function fallback(){ inp.focus(); inp.select(); try { document.execCommand('copy'); toast('コピーしました'); } catch(err) { toast('選んだ状態にしました。長押しでコピーしてください'); } }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(function(){ toast('コピーしました'); }, fallback);
+    else fallback();
+  });
+
+  /* ---------- 最初の読み込み ---------- */
+  function loadApp(){
+    var g0 = gridRange(S.viewMonth);
+    call('getInitialData', { ym: ymOf(today), start: g0.start, end: g0.end }).then(function(d){
+      S.names = d.names; S.urls = d.names.map(function(n){ return { name: n, url: personalUrl(n) }; }); S.todos = d.todos; S.expenses = d.expenses; S.thisMonthExpenses = d.expenses;
+      S.events = d.events; S.homeEvents = d.events; S.calOk = d.calendarStatus === 'ok';
+      fillSelects(); showBanner(d);
+      renderHome(); renderTodos(); renderMoney(); renderCal();
+      $('loading').hidden = true;
+      if (!ME || S.names.indexOf(ME) < 0) askWho();
+      else if (cameByForm) openUrls();
+    }).catch(function(e){
+      var msg = (e && e.message) || '';
+      if (msg.indexOf('合言葉が違います') >= 0) { KEY = ''; save('futari-key', ''); showLogin(); fail(e); return; }
+      $('loading').innerHTML = '<div style="padding:24px;text-align:center">読み込めませんでした<br><span class="muted">' + esc(msg) + '</span></div>';
+    });
+  }
+  function start(){
+    if (!IS_DEMO && !KEY) showLogin();
+    else loadApp();
+  }
+
+  /* ---------- お試しモード（GAS の外で開いたときだけ使う。中身は仮） ---------- */
+  var DEMO = (function(){
+    var names = ['たくや','もも'], id = 0;
+    function nid(){ return 'demo' + (++id); }
+    var todos = [
+      { id:nid(), title:'洗剤とティッシュを買う', who:'ふたり', due:todayIso, done:false, created:'1' },
+      { id:nid(), title:'旅行の宿をきめる', who:'たくや', due:iso(addDays(today,5)), done:false, created:'2' },
+      { id:nid(), title:'冷蔵庫の中を片づける', who:'もも', due:'', done:false, created:'3' },
+      { id:nid(), title:'カーテンを洗う', who:'ふたり', due:'', done:true, created:'4' }
+    ];
+    var first = new Date(today.getFullYear(), today.getMonth(), 1);
+    function dm(n){ return iso(new Date(first.getFullYear(), first.getMonth(), Math.min(1+n, today.getDate()))); }
+    var money = [
+      { id:nid(), date:dm(0), amount:12400, category:'家賃・光熱', payer:'たくや', memo:'' },
+      { id:nid(), date:dm(2), amount:3860, category:'食費', payer:'もも', memo:'スーパー' },
+      { id:nid(), date:dm(5), amount:5200, category:'外食', payer:'たくや', memo:'' },
+      { id:nid(), date:dm(9), amount:6400, category:'おでかけ', payer:'もも', memo:'水族館' }
+    ];
+    var evs = [
+      { id:nid(), title:'ふたりでごはん', allDay:false, start:todayIso, end:todayIso, time:'19:00', endTime:'21:00', recurring:false },
+      { id:nid(), title:'もも 実家に帰る', allDay:true, start:iso(addDays(today,1)), end:iso(addDays(today,1)), time:'終日', endTime:'', recurring:false },
+      { id:nid(), title:'旅行', allDay:true, start:iso(addDays(today,10)), end:iso(addDays(today,11)), time:'終日', endTime:'', recurring:false }
+    ];
+    function copy(a){ return JSON.parse(JSON.stringify(a)); }
+    function byMonth(ym){ return copy(money.filter(function(x){ return x.date.slice(0,7) === ym; })); }
+    return {
+      login: function(){ return { names:names }; },
+      getInitialData: function(q){ return { demo:true, names:names, calendarStatus:'ok', tzWarning:'', todos:copy(todos), expenses:byMonth(q.ym), events:copy(evs) }; },
+      getTodos: function(){ return copy(todos); },
+      addTodo: function(t){ todos.push({ id:nid(), title:t.title, who:t.who, due:t.due, done:false, created:String(Date.now()) }); return copy(todos); },
+      toggleTodo: function(i){ todos.forEach(function(t){ if (t.id === i) t.done = !t.done; }); return copy(todos); },
+      deleteTodo: function(i){ todos = todos.filter(function(t){ return t.id !== i; }); return copy(todos); },
+      getExpenses: byMonth,
+      addExpense: function(x){ x.id = nid(); money.push(x); return byMonth(x.date.slice(0,7)); },
+      deleteExpense: function(i, ym){ money = money.filter(function(x){ return x.id !== i; }); return byMonth(ym); },
+      getEvents: function(){ return copy(evs); },
+      addEvent: function(e){ evs.push({ id:nid(), title:e.title, allDay:e.allDay, start:e.date, end:e.date, time:e.allDay ? '終日' : e.start, endTime:e.allDay ? '' : e.end, recurring:false }); return copy(evs); },
+      deleteEvent: function(i){ evs = evs.filter(function(e){ return e.id !== i; }); return copy(evs); }
+    };
+  })();
+
+  start();
+})();
+</script>
+</body>
+</html>
+<!-- ======== 終わり（この行が見えていれば最後まで貼れています） ======== -->
